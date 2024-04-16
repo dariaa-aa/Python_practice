@@ -27,6 +27,10 @@ HW
 1. We are logged in
 2. Click "Add to cart" button of Sauce Labs Backpack item once
 3. Check that quantity pic appeared on the cart pic with "1" in it
+4. Click cart icon
+5. Check url changed to: https://www.saucedemo.com/cart.html
+6. Check item's in cart label is Sauce Labs Backpack
+7. Check total price is $29.99
 
 №2
 1. We are logged in
@@ -43,6 +47,9 @@ HW
 3. Check that url changed to: https://www.saucedemo.com/inventory-item.html?id=0
 4. Click "Add to cart" button once
 5. Check that quantity icon appeared on the cart icon with "1" in it
+6. Check url changed to: https://www.saucedemo.com/cart.html
+7. Check item's in cart label is Sauce Labs Bike Light
+8. Check total price is $9.99
 
 №4
 1. We are logged in with Sauce Labs Bike Light in cart and on https://www.saucedemo.com/inventory-item.html?id=0

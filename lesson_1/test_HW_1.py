@@ -3,9 +3,12 @@ import pytest
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 service = Service(executable_path=ChromeDriverManager().install())
 driver = webdriver.Chrome(service=service)
+wait = WebDriverWait(driver, 10, poll_frequency=1)
 
 @pytest.fixture
 def auth_positive():
@@ -13,6 +16,8 @@ def auth_positive():
     username_button = ('xpath', '//input[@id="user-name"]')
     password_button = ('xpath', '//input[@id="password"]')
     login_button = ('xpath', '//input[@id="login-button"]')
+    menu_button = ('xpath', '//button[@id="react-burger-menu-btn"]')
+    logout_button = ('xpath', '//a[@id="logout_sidebar_link"]')
 
     username = 'standard_user'
     password = 'secret_sauce'
@@ -20,6 +25,9 @@ def auth_positive():
     driver.find_element(*username_button).send_keys(username)
     driver.find_element(*password_button).send_keys(password)
     driver.find_element(*login_button).click()
+    yield
+    wait.until(EC.element_to_be_clickable(menu_button)).click()
+    wait.until(EC.element_to_be_clickable(logout_button)).click()
 
 @pytest.fixture
 def add_to_cart(auth_positive):
@@ -70,6 +78,7 @@ def test_add_cart_catalogue(auth_positive):
     price_in_cart = ('xpath', '//div[text()="29.99"]')
 
     driver.find_element(*add_cart_button).click()
+    assert 'shopping-cart-badge' in driver.page_source
     assert driver.find_element(*qntt_icon).text == '1'
 
     driver.find_element(*cart_icon).click()
@@ -87,12 +96,14 @@ def test_remove_item_catalogue(add_to_cart):
     assert driver.current_url == 'https://www.saucedemo.com/cart.html'
 
     driver.find_element(*remove_button).click()
-    try:
-        driver.find_element(*qntt_icon)
-    except:
-        element = 'None'
-    assert element == 'None'
-    assert driver.find_element(*removed_item)
+    # try:
+    #     driver.find_element(*qntt_icon)
+    # except:
+    #     element = 'None'
+    # assert element == 'None'
+    assert 'shopping-cart-badge' not in driver.page_source
+    # assert driver.find_element(*removed_item)
+    assert 'cart_item_label' not in driver.page_source
 
 def test_add_cart_item(auth_positive):
     item = ('xpath', '//a[@id="item_0_title_link"]')
@@ -105,6 +116,7 @@ def test_add_cart_item(auth_positive):
     driver.find_element(*item).click()
     assert driver.current_url == 'https://www.saucedemo.com/inventory-item.html?id=0'
     driver.find_element(*add_cart_button).click()
+    assert 'shopping-cart-badge' in driver.page_source
     assert driver.find_element(*qntt_icon).text == '1'
     driver.find_element(*cart_icon).click()
     assert driver.current_url == 'https://www.saucedemo.com/cart.html'
@@ -122,11 +134,13 @@ def test_remove_cart_item(auth_positive):
     driver.find_element(*add_cart_button).click()
     driver.find_element(*remove_button).click()
 
-    try:
-        driver.find_element(*qntt_icon)
-    except:
-        element = 'None'
-    assert element == 'None'
+    # try:
+    #     driver.find_element(*qntt_icon)
+    # except:
+    #     element = 'None'
+    # assert element == 'None'
+    assert 'shopping-cart-badge' not in driver.page_source
+    assert 'remove' not in driver.page_source
 
 #Item
 def test_item_label_click(auth_positive):
@@ -147,7 +161,7 @@ def test_order_positive(add_to_cart):
     checkout_button = ('xpath', '//button[@id="checkout"]')
     fname_field = ('xpath', '//input[@id="first-name"]')
     lname_field = ('xpath', '//input[@id="last-name"]')
-    zip_fieled = ('xpath', '//input[@id="postal-code"]')
+    zip_field = ('xpath', '//input[@id="postal-code"]')
     continue_button = ('xpath', '//input[@id="continue"]')
     item_in_cart = ('xpath', '//div[text()="Sauce Labs Backpack"]')
     total_price_field = ('xpath', '//div[contains(@class,"subtotal_label")]')
@@ -161,10 +175,10 @@ def test_order_positive(add_to_cart):
     assert driver.current_url == 'https://www.saucedemo.com/checkout-step-one.html'
     driver.find_element(*fname_field).send_keys('Daria')
     driver.find_element(*lname_field).send_keys('Podolskaia')
-    driver.find_element(*zip_fieled).send_keys('117525')
+    driver.find_element(*zip_field).send_keys('117525')
     assert driver.find_element(*fname_field).get_attribute('value') == 'Daria'
     assert driver.find_element(*lname_field).get_attribute('value') == 'Podolskaia'
-    assert driver.find_element(*zip_fieled).get_attribute('value') == '117525'
+    assert driver.find_element(*zip_field).get_attribute('value') == '117525'
     driver.find_element(*continue_button).click()
     assert driver.current_url == 'https://www.saucedemo.com/checkout-step-two.html'
     assert driver.find_element(*item_in_cart).text == 'Sauce Labs Backpack'
@@ -241,7 +255,7 @@ def test_menu_logout(auth_positive):
     logout_button = ('xpath', '//a[@id="logout_sidebar_link"]')
 
     driver.find_element(*menu_button).click()
-    driver.find_element(*logout_button).click()
+    wait.until(EC.element_to_be_clickable(logout_button)).click()
     assert driver.current_url == 'https://www.saucedemo.com/'
 
 def test_menu_about(auth_positive):
@@ -249,8 +263,7 @@ def test_menu_about(auth_positive):
     about_button = ('xpath', '//a[@id="about_sidebar_link"]')
 
     driver.find_element(*menu_button).click()
-    # time.sleep(3) почему не работает без паузы?
-    driver.find_element(*about_button).click()
+    wait.until(EC.element_to_be_clickable(about_button)).click()
     assert driver.current_url == 'https://saucelabs.com/'
 
 def test_menu_reset(add_to_cart):
@@ -259,11 +272,12 @@ def test_menu_reset(add_to_cart):
     qntt_icon = ('xpath', '//span[contains(@class, "cart")]')
 
     driver.find_element(*menu_button).click()
-    time.sleep(3)
-    driver.find_element(*reset_button).click()
+    wait.until(EC.element_to_be_clickable(reset_button)).click()
 
-    try:
-        driver.find_element(*qntt_icon)
-    except:
-        element = 'None'
-    assert element == 'None'
+    # try:
+    #     driver.find_element(*qntt_icon)
+    # except:
+    #     element = 'None'
+    # assert element == 'None'
+    assert 'shopping_cart_badge' not in driver.page_source
+    # assert 'remove' not in driver.page_source
