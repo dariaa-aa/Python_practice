@@ -8,17 +8,26 @@ from selenium.webdriver.support import expected_conditions as EC
 from locators import *
 from data import *
 
-# wait = WebDriverWait(driver, 10, poll_frequency=1)
-
-@pytest.fixture(autouse=True)
-def driver():
-    service = Service(executable_path=ChromeDriverManager().install())
+@pytest.fixture
+def chrome_options():
     options = Options()
     options.add_argument('--headless')
-    driver = webdriver.Chrome(service=service, options=options)
+
+    yield options
+
+@pytest.fixture
+def driver(chrome_options):
+    service = Service(executable_path=ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     driver.implicitly_wait(10)
 
     yield driver
+
+@pytest.fixture
+def wait(driver):
+    wait = WebDriverWait(driver, 10, poll_frequency=1)
+
+    yield wait
 
 @pytest.fixture
 def auth_positive(driver):
@@ -27,6 +36,9 @@ def auth_positive(driver):
     driver.find_element(*username_button).send_keys(correct_username)
     driver.find_element(*password_button).send_keys(correct_password)
     driver.find_element(*login_button).click()
+    assert driver.current_url == main_page_url
+    assert len(driver.find_elements(*main_page_container)) != 0
+    assert len(driver.find_elements(*main_page_items)) == 6
 
     yield
     driver.find_element(*menu_button).click()

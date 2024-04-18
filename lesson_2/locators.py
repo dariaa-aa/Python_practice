@@ -4,6 +4,9 @@ username_button = ('xpath', '//input[@id="user-name"]')
 password_button = ('xpath', '//input[@id="password"]')
 login_button = ('xpath', '//input[@id="login-button"]')
 warning_text = ('xpath', '//h3[contains(text(), "Epic sadface")]')
+main_page_container = ('xpath', '//div[@class="inventory_container"]')
+main_page_items = ('xpath', '//div[@class="inventory_item_description"]')
+
 
 #cart
 
